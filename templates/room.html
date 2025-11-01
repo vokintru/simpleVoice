@@ -439,15 +439,14 @@
             </div>
         </div>
         <div class="footer">
-            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1
+            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1.1
         </div>
     </div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
-        const serverUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 8088}`;
         const roomCode = '{{ROOM_CODE}}';
-        const socket = io(serverUrl);
+        const socket = io();
         
         let localStream = null;
         let peers = {};
@@ -1204,7 +1203,7 @@
                 if (audioGains[socketId]) {
                     audioGains[socketId].gain.value = 1.0;
                 }
-                    console.log(`Громкость через audio.volume для ${socketId}: ${volumePercent}% (volume: ${audio.volume.toFixed(2)})`);
+                console.log(`Громкость через audio.volume для ${socketId}: ${volumePercent}% (volume: ${audio.volume.toFixed(2)})`);
             } else {
                 if (!audioGains[socketId]) {
                     if (audio.srcObject) {

@@ -184,7 +184,7 @@
 
         <div class="error" id="errorMessage"></div>
         <div class="footer">
-            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1
+            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1.1
         </div>
     </div>
 
@@ -207,8 +207,7 @@
             return null;
         }
 
-        const serverUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 8088}`;
-        const socket = io(serverUrl);
+        const socket = io();
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedUsername = getCookie('username');
