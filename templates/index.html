@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simpleVoice - Создать/Присоединиться</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #e0e0e0;
+            text-align: center;
+            margin-bottom: 6px;
+            font-size: 1.5em;
+            font-weight: 400;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #e0e0e0;
+            font-weight: 400;
+            font-size: 0.9em;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #555;
+            border-radius: 2px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #555;
+            border-radius: 2px;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        button:hover {
+            background: #3a3a3a;
+            border-color: #888;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error {
+            color: #e0e0e0;
+            margin-top: 8px;
+            padding: 8px;
+            background: #1a1a1a;
+            border: 1px solid #555;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            margin: -8px 0 0 -8px;
+            border: 2px solid #888;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #aaa;
+        }
+
+        .footer a {
+            color: #e0e0e0;
+            text-decoration: underline;
+        }
+
+        .footer a:hover {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>simpleVoice</h1>
+        <p class="subtitle">Создайте комнату или присоединитесь к существующей</p>
+
+        <div class="form-group">
+            <label for="username">Ваше имя:</label>
+            <input type="text" id="username" placeholder="Введите ваше имя" maxlength="20" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="roomCode">Код комнаты (для присоединения):</label>
+            <input type="text" id="roomCode" placeholder="Введите код комнаты" maxlength="6" style="text-transform: uppercase;" autocomplete="off">
+        </div>
+
+        <div class="button-group">
+            <button class="btn-create" onclick="createRoom()">Создать комнату</button>
+            <button class="btn-join" onclick="joinRoom()">Присоединиться</button>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+        <div class="footer">
+            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        const serverUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 8088}`;
+        const socket = io(serverUrl);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUsername = getCookie('username');
+            if (savedUsername) {
+                document.getElementById('username').value = savedUsername;
+            }
+        });
+
+        socket.on('connect', () => {
+            console.log('Подключен к серверу');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Ошибка подключения:', error);
+            showError('Не удалось подключиться к серверу. Убедитесь, что сервер запущен.');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Отключен от сервера');
+        });
+
+        socket.on('room-created', (data) => {
+            console.log('Комната создана:', data);
+
+            const createBtn = document.querySelector('.btn-create');
+            createBtn.classList.remove('loading');
+            createBtn.disabled = false;
+
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                setCookie('username', username, 365);
+            }
+
+            socket.disconnect();
+            window.location.href = `/room/${data.room_code}`;
+        });
+
+        socket.on('room-joined', (data) => {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                setCookie('username', username, 365);
+            }
+            window.location.href = `/room/${data.room_code}`;
+        });
+
+        socket.on('join-error', (data) => {
+            showError(data.message);
+        });
+
+        function createRoom() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showError('Пожалуйста, введите ваше имя');
+                return;
+            }
+
+            if (!socket.connected) {
+                showError('Не подключено к серверу. Попробуйте обновить страницу.');
+                return;
+            }
+
+            const createBtn = document.querySelector('.btn-create');
+            createBtn.classList.add('loading');
+            createBtn.disabled = true;
+
+            console.log('Отправка запроса на создание комнаты для:', username);
+            socket.emit('create_room', { username });
+
+            setTimeout(() => {
+                createBtn.classList.remove('loading');
+                createBtn.disabled = false;
+            }, 5000);
+        }
+
+        function joinRoom() {
+            const username = document.getElementById('username').value.trim();
+            const roomCode = document.getElementById('roomCode').value.trim().toUpperCase();
+
+            if (!username) {
+                showError('Пожалуйста, введите ваше имя');
+                return;
+            }
+
+            if (!roomCode) {
+                showError('Пожалуйста, введите код комнаты');
+                return;
+            }
+
+            socket.emit('join_room', { username, room_code: roomCode });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        document.getElementById('roomCode').addEventListener('input', function(e) {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
+        document.getElementById('roomCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                joinRoom();
+            }
+        });
+    </script>
+</body>
+</html>
+

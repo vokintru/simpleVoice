@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simpleVoice - Комната {{ROOM_CODE}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            padding: 24px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #444;
+        }
+
+        h1 {
+            color: #e0e0e0;
+            margin-bottom: 8px;
+            font-size: 1.5em;
+            font-weight: 400;
+        }
+
+        .room-code {
+            font-size: 20px;
+            font-weight: 400;
+            color: #e0e0e0;
+            letter-spacing: 2px;
+            margin: 8px 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 24px 0;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: 1px solid #555;
+            border-radius: 2px;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        button:hover {
+            background: #3a3a3a;
+            border-color: #888;
+        }
+
+        button:active {
+            opacity: 0.8;
+        }
+
+        .btn-mute {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .btn-mute.muted {
+            background: #3a3a3a;
+            border-color: #888;
+        }
+
+        .btn-leave {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .btn-enable-mic {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .users-list {
+            margin-top: 24px;
+        }
+
+        .users-list h2 {
+            color: #e0e0e0;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        .user-item {
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item-main {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .user-name {
+            font-weight: 400;
+            color: #e0e0e0;
+        }
+
+        .mic-icon {
+            font-size: 16px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.2s;
+        }
+
+        .mic-icon.active {
+            color: #e0e0e0;
+        }
+
+        .mic-icon.inactive {
+            color: #888;
+            opacity: 0.7;
+        }
+
+        .mic-icon.muted {
+            color: #e0e0e0;
+        }
+
+        .mic-icon.muted-disabled {
+            color: #e0e0e0;
+            opacity: 1;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .volume-label {
+            font-size: 12px;
+            color: #aaa;
+            min-width: 50px;
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #888;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #888;
+            cursor: pointer;
+            border: none;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border: 1px solid #555;
+            font-size: 12px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .status.connected {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .status.connecting {
+            background: #1a1a1a;
+            color: #aaa;
+        }
+
+        .info {
+            text-align: center;
+            color: #aaa;
+            margin-top: 16px;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            font-size: 0.9em;
+        }
+
+        .copy-btn {
+            background: #2a2a2a;
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border: 1px solid #555;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+            font-weight: 400;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: 4px;
+        }
+
+        .copy-btn:hover {
+            background: #3a3a3a;
+            border-color: #888;
+        }
+
+        .copy-btn:active {
+            opacity: 0.8;
+        }
+
+        .button-group-small {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .error {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 12px;
+            border: 1px solid #555;
+            margin: 16px 0;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            animation: slideIn 0.2s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal h2 {
+            color: #e0e0e0;
+            margin-bottom: 16px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #555;
+            font-size: 14px;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: #888;
+        }
+
+        .modal-button {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .modal-button:hover {
+            background: #3a3a3a;
+            border-color: #888;
+        }
+
+        .footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #aaa;
+            padding-top: 16px;
+            border-top: 1px solid #444;
+        }
+
+        .footer a {
+            color: #e0e0e0;
+            text-decoration: underline;
+        }
+
+        .footer a:hover {
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="usernameModal">
+        <div class="modal">
+            <h2>Введите ваше имя</h2>
+            <p style="text-align: center; color: #aaa; margin-bottom: 16px; font-size: 0.9em;">Для участия в голосовом чате необходимо указать имя</p>
+            <input type="text" 
+                   id="modalUsername" 
+                   class="modal-input" 
+                   placeholder="Введите ваше имя" 
+                   maxlength="20" 
+                   autocomplete="off"
+                   onkeypress="handleModalKeyPress(event)">
+            <button class="modal-button" onclick="saveUsernameFromModal()">Продолжить</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>simpleVoice</h1>
+            <div class="room-code" id="roomCode">{{ROOM_CODE}}</div>
+            <div class="button-group-small">
+                <button class="copy-btn" onclick="copyRoomCode(event)">Копировать код</button>
+                <button class="copy-btn" onclick="copyRoomLink(event)">Копировать ссылку</button>
+            </div>
+        </div>
+
+        <div class="error" id="errorMessage"></div>
+
+        <div class="controls">
+            <button class="btn-mute" id="muteBtn" onclick="toggleMute()" style="display: none;">
+                <span id="muteText">Выключить микрофон</span>
+            </button>
+            <button class="btn-enable-mic" id="enableMicBtn" onclick="requestMicrophoneAccess()">
+                <span>Включить микрофон</span>
+            </button>
+            <button class="btn-leave" onclick="leaveRoom()">
+                <span>Покинуть комнату</span>
+            </button>
+        </div>
+
+        <div class="users-list">
+            <h2>Участники:</h2>
+            <div id="usersContainer">
+                <div class="info">Загрузка участников...</div>
+            </div>
+        </div>
+        <div class="footer">
+            <a href="https://github.com/vokintru/simpleVoice" target="_blank">vokintru/simpleVoice</a> | v0.1
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const serverUrl = `${window.location.protocol}//${window.location.hostname}:${window.location.port || 8088}`;
+        const roomCode = '{{ROOM_CODE}}';
+        const socket = io(serverUrl);
+        
+        let localStream = null;
+        let peers = {};
+        let remoteAudioElements = {};
+        let audioAnalysers = {};
+        let audioContexts = {};
+        let audioGains = {};
+        let micActivityCheckers = {};
+        let isMuted = false;
+        let microphoneGranted = false;
+        const configuration = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ]
+        };
+
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        function checkMicrophoneStatus() {
+            if (microphoneGranted && localStream && localStream.getAudioTracks().length > 0) {
+                document.getElementById('enableMicBtn').style.display = 'none';
+                document.getElementById('muteBtn').style.display = 'inline-flex';
+            } else {
+                document.getElementById('enableMicBtn').style.display = 'inline-flex';
+                document.getElementById('muteBtn').style.display = 'none';
+            }
+        }
+
+        checkMicrophoneStatus();
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function showUsernameModal() {
+            const modal = document.getElementById('usernameModal');
+            modal.classList.add('show');
+            const input = document.getElementById('modalUsername');
+            input.focus();
+        }
+
+        function hideUsernameModal() {
+            const modal = document.getElementById('usernameModal');
+            modal.classList.remove('show');
+        }
+
+        function saveUsernameFromModal() {
+            const usernameInput = document.getElementById('modalUsername');
+            const username = usernameInput.value.trim();
+            
+            if (!username) {
+                alert('Пожалуйста, введите ваше имя');
+                return;
+            }
+
+            setCookie('username', username, 365);
+
+            hideUsernameModal();
+
+            connectToRoom();
+        }
+
+        function handleModalKeyPress(event) {
+            if (event.key === 'Enter') {
+                saveUsernameFromModal();
+            }
+        }
+
+        function connectToRoom() {
+            const username = getCookie('username') || 'User';
+            console.log('Присоединение к комнате:', roomCode, 'как', username);
+
+            setTimeout(() => {
+                socket.emit('join_room', {
+                    room_code: roomCode,
+                    username: username
+                });
+            }, 100);
+        }
+
+        socket.on('connect', () => {
+            console.log('Подключен к серверу, socket.id:', socket.id);
+
+            const username = getCookie('username');
+            
+            if (!username || username.trim() === '') {
+                showUsernameModal();
+            } else {
+                connectToRoom();
+            }
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Ошибка подключения:', error);
+            showError('Не удалось подключиться к серверу. Убедитесь, что сервер запущен.');
+        });
+
+        socket.on('join-error', (data) => {
+            console.error('Ошибка присоединения к комнате:', data);
+            showError(data.message || 'Не удалось присоединиться к комнате');
+            document.getElementById('usersContainer').innerHTML = 
+                `<div class="error show">${data.message || 'Не удалось присоединиться к комнате'}</div>`;
+        });
+
+        socket.on('room-joined', async (data) => {
+            console.log('Присоединился к комнате:', data);
+            const otherUsers = data.users.filter(user => user.socket_id !== socket.id);
+            socket.roomUsers = data.users;
+            updateUsersList(otherUsers);
+
+            try {
+                await requestMicrophoneAccess();
+            } catch (error) {
+                console.log('Не удалось автоматически запросить микрофон, показываем кнопку');
+            }
+        });
+
+
+        async function requestMicrophoneAccess() {
+            if (microphoneGranted && localStream) {
+                const activeTracks = localStream.getAudioTracks().filter(track => track.readyState === 'live');
+                if (activeTracks.length > 0) {
+                    return;
+                }
+            }
+
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    },
+                    video: false 
+                });
+                console.log('Получен доступ к микрофону');
+                microphoneGranted = true;
+
+                checkMicrophoneStatus();
+
+                Object.keys(peers).forEach(targetSocketId => {
+                    const peer = peers[targetSocketId];
+                    if (peer && localStream) {
+                        const existingSenders = peer.getSenders();
+                        const hasAudioTrack = existingSenders.some(sender => 
+                            sender.track && sender.track.kind === 'audio'
+                        );
+                        
+                        if (!hasAudioTrack) {
+                            console.log('Добавление локального потока к существующему peer connection для', targetSocketId);
+                            localStream.getTracks().forEach(track => {
+                                if (track.readyState === 'live' && track.kind === 'audio') {
+                                    try {
+                                        peer.addTrack(track, localStream);
+                                        console.log('Добавлен трек к существующему соединению для', targetSocketId);
+                                    } catch (err) {
+                                        console.error('Ошибка добавления трека к существующему соединению:', err);
+                                    }
+                                }
+                            });
+
+                            if (peer.remoteDescription && peer.signalingState !== 'stable') {
+                                peer.addEventListener('signalingstatechange', function onSignalingStateChange() {
+                                    if (peer.signalingState === 'stable') {
+                                        peer.removeEventListener('signalingstatechange', onSignalingStateChange);
+                                        console.log('Пересоздание offer для', targetSocketId, 'после стабилизации соединения');
+                                        peer.createOffer({
+                                            offerToReceiveAudio: true,
+                                            offerToReceiveVideo: false
+                                        }).then(offer => {
+                                            return peer.setLocalDescription(offer);
+                                        }).then(() => {
+                                            socket.emit('offer', {
+                                                target: targetSocketId,
+                                                offer: peer.localDescription
+                                            });
+                                            console.log('Обновленный offer отправлен к', targetSocketId);
+                                        }).catch(err => {
+                                            console.error('Ошибка пересоздания offer для', targetSocketId, ':', err);
+                                        });
+                                    }
+                                }, { once: true });
+                            } else if (peer.remoteDescription && peer.signalingState === 'stable') {
+                                console.log('Пересоздание offer для', targetSocketId, 'после добавления трека');
+                                peer.createOffer({
+                                    offerToReceiveAudio: true,
+                                    offerToReceiveVideo: false
+                                }).then(offer => {
+                                    return peer.setLocalDescription(offer);
+                                }).then(() => {
+                                    socket.emit('offer', {
+                                        target: targetSocketId,
+                                        offer: peer.localDescription
+                                    });
+                                    console.log('Обновленный offer отправлен к', targetSocketId);
+                                }).catch(err => {
+                                    console.error('Ошибка пересоздания offer для', targetSocketId, ':', err);
+                                });
+                            }
+                        }
+                    }
+                });
+
+                if (socket.roomUsers) {
+                    socket.roomUsers.forEach(user => {
+                        if (user.socket_id !== socket.id && !peers[user.socket_id]) {
+                            console.log('Создание peer connection для пользователя:', user.socket_id);
+                            createPeerConnection(user.socket_id);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка доступа к микрофону:', error);
+                microphoneGranted = false;
+                localStream = null;
+
+                let errorMessage = 'Не удалось получить доступ к микрофону. ';
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    errorMessage += 'Разрешите доступ к микрофону в настройках браузера.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    errorMessage += 'Микрофон не найден. Убедитесь, что устройство подключено.';
+                } else {
+                    errorMessage += 'Проверьте разрешения и настройки устройства.';
+                }
+                
+                showError(errorMessage);
+                checkMicrophoneStatus();
+            }
+        }
+
+        socket.on('user-joined', (data) => {
+            console.log('Пользователь присоединился:', data);
+            if (data.socket_id !== socket.id) {
+                addUserToList(data);
+
+                if (localStream && microphoneGranted && !peers[data.socket_id]) {
+                    console.log('Создание peer connection для нового пользователя:', data.socket_id);
+                    createPeerConnection(data.socket_id);
+                } else if (!localStream || !microphoneGranted) {
+                    console.log('Микрофон еще не включен, соединение будет создано после включения');
+                }
+            }
+        });
+
+        socket.on('user-left', (data) => {
+            console.log('Пользователь покинул комнату:', data);
+            removeUserFromList(data.sid);
+
+            if (peers[data.sid]) {
+                peers[data.sid].close();
+                delete peers[data.sid];
+            }
+        });
+
+        socket.on('user-mic-muted', (data) => {
+            console.log('Пользователь выключил микрофон:', data);
+            updateUserMicIcon(data.socket_id, true);
+        });
+
+        socket.on('user-mic-unmuted', (data) => {
+            console.log('Пользователь включил микрофон:', data);
+            updateUserMicIcon(data.socket_id, false);
+        });
+
+        socket.on('offer', async (data) => {
+            console.log('Получен offer от:', data.from);
+
+            if (data.from === socket.id) {
+                console.warn('Получен offer от самого себя, пропускаем');
+                return;
+            }
+            
+            try {
+                let peer = peers[data.from];
+
+                if (!peer) {
+                    console.log('Создание нового peer connection для обработки offer от', data.from);
+                    peer = new RTCPeerConnection(configuration);
+                    peers[data.from] = peer;
+
+                    setupPeerConnectionHandlers(peer, data.from);
+                }
+
+                const existingSenders = peer.getSenders();
+                const hasAudioTrack = existingSenders.some(sender => 
+                    sender.track && sender.track.kind === 'audio'
+                );
+                
+                if (!hasAudioTrack && localStream) {
+                    localStream.getTracks().forEach(track => {
+                        if (track.readyState === 'live' && track.kind === 'audio') {
+                            console.log('Добавление локального трека к peer для обработки offer:', track.kind, track.id, 'enabled:', track.enabled);
+                            peer.addTrack(track, localStream);
+                        } else {
+                            console.warn('Трек не готов для обработки offer:', track.kind, track.readyState);
+                        }
+                    });
+                } else if (!hasAudioTrack && !localStream) {
+                    console.warn('Локальный поток отсутствует, но соединение будет установлено без возможности отправки аудио');
+                }
+
+                await peer.setRemoteDescription(new RTCSessionDescription(data.offer));
+                console.log('Remote description (offer) установлен для', data.from);
+
+                const answer = await peer.createAnswer({
+                    offerToReceiveAudio: true,
+                    offerToReceiveVideo: false
+                });
+
+                await peer.setLocalDescription(answer);
+                console.log('Local description (answer) установлен для', data.from);
+
+                socket.emit('answer', {
+                    target: data.from,
+                    answer: answer
+                });
+                console.log('Answer отправлен к', data.from);
+            } catch (error) {
+                console.error('Ошибка обработки offer от', data.from, ':', error);
+                console.error('Stack trace:', error.stack);
+            }
+        });
+
+        socket.on('answer', async (data) => {
+            console.log('Получен answer от:', data.from);
+            try {
+                if (peers[data.from]) {
+                    await peers[data.from].setRemoteDescription(new RTCSessionDescription(data.answer));
+                    console.log('Remote description (answer) установлен для', data.from);
+                } else {
+                    console.error('Peer connection не найден для', data.from);
+                }
+            } catch (error) {
+                console.error('Ошибка обработки answer от', data.from, ':', error);
+            }
+        });
+
+        socket.on('ice-candidate', async (data) => {
+            console.log('Получен ICE candidate от:', data.from);
+            try {
+                if (peers[data.from] && data.candidate) {
+                    await peers[data.from].addIceCandidate(new RTCIceCandidate(data.candidate));
+                    console.log('ICE candidate добавлен для', data.from);
+                } else if (!peers[data.from]) {
+                    console.warn('Peer connection не найден для ICE candidate от', data.from);
+                    if (localStream) {
+                        createPeerConnection(data.from);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка добавления ICE candidate от', data.from, ':', error);
+            }
+        });
+
+        function setupPeerConnectionHandlers(peer, targetSocketId) {
+            peer.ontrack = (event) => {
+                console.log('Получен удаленный поток от:', targetSocketId, 'tracks:', event.track.kind, 'streams:', event.streams?.length, 'track.id:', event.track.id);
+
+                let remoteStream = null;
+                if (event.streams && event.streams.length > 0) {
+                    remoteStream = event.streams[0];
+                } else if (event.track) {
+                    remoteStream = new MediaStream([event.track]);
+                }
+                
+                if (!remoteStream) {
+                    console.error('Не удалось получить поток от', targetSocketId);
+                    return;
+                }
+
+                let audio = remoteAudioElements[targetSocketId];
+                
+                if (!audio) {
+                    audio = document.createElement('audio');
+                    audio.autoplay = true;
+                    audio.playsInline = true;
+                    audio.volume = 1.0;
+                    audio.style.display = 'none';
+                    document.body.appendChild(audio);
+                    remoteAudioElements[targetSocketId] = audio;
+                    console.log('Создан новый audio элемент для', targetSocketId);
+                }
+
+                if (audio.srcObject && audio.srcObject instanceof MediaStream) {
+                    const existingStream = audio.srcObject;
+                    event.track.onended = () => {
+                        console.log('Трек закончился для', targetSocketId);
+                    };
+                    const hasTrack = existingStream.getTracks().some(t => t.id === event.track.id);
+                    if (!hasTrack) {
+                        existingStream.addTrack(event.track);
+                        console.log('Добавлен трек к существующему потоку для', targetSocketId);
+                    }
+                    if (!audioAnalysers[targetSocketId] && existingStream.getAudioTracks().length > 0) {
+                        setupAudioAnalysis(targetSocketId, existingStream);
+                    }
+
+                    existingStream.getAudioTracks().forEach(track => {
+                        track.addEventListener('ended', () => {
+                            updateMicIcon(targetSocketId);
+                        });
+
+                        if (typeof track.addEventListener === 'function') {
+                            track.addEventListener('mute', () => {
+                                updateMicIcon(targetSocketId);
+                            });
+                            track.addEventListener('unmute', () => {
+                                updateMicIcon(targetSocketId);
+                            });
+                        }
+
+                        if (!track._enabledObserver) {
+                            track._enabledObserver = setInterval(() => {
+                                updateMicIcon(targetSocketId);
+                            }, 200);
+                        }
+                    });
+                } else {
+                    audio.srcObject = remoteStream;
+                    console.log('Audio элемент настроен для', targetSocketId, 'с потоком', remoteStream.id, 'треки:', remoteStream.getTracks().map(t => t.kind));
+
+                    setupAudioAnalysis(targetSocketId, remoteStream);
+
+                    remoteStream.getAudioTracks().forEach(track => {
+                        track.addEventListener('ended', () => {
+                            updateMicIcon(targetSocketId);
+                        });
+
+                        if (typeof track.addEventListener === 'function') {
+                            track.addEventListener('mute', () => {
+                                updateMicIcon(targetSocketId);
+                            });
+                            track.addEventListener('unmute', () => {
+                                updateMicIcon(targetSocketId);
+                            });
+                        }
+
+                        if (!track._enabledObserver) {
+                            track._enabledObserver = setInterval(() => {
+                                updateMicIcon(targetSocketId);
+                            }, 200);
+                        }
+                    });
+
+                    audio.play().then(() => {
+                        console.log('Воспроизведение аудио начато для', targetSocketId);
+                    }).catch(err => {
+                        console.error('Ошибка воспроизведения аудио для', targetSocketId, ':', err);
+                        if (isIOS) {
+                            showError('Нажмите на страницу для активации аудио');
+                        }
+                    });
+                }
+            };
+
+            peer.onconnectionstatechange = () => {
+                const state = peer.connectionState;
+                console.log(`Состояние соединения с ${targetSocketId}:`, state);
+                updateUserConnectionStatus(targetSocketId, state);
+            };
+
+            peer.oniceconnectionstatechange = () => {
+                console.log(`ICE состояние для ${targetSocketId}:`, peer.iceConnectionState);
+                if (peer.iceConnectionState === 'connected' || peer.iceConnectionState === 'completed') {
+                    updateUserConnectionStatus(targetSocketId, 'connected');
+                } else if (peer.iceConnectionState === 'connecting' || peer.iceConnectionState === 'checking') {
+                    updateUserConnectionStatus(targetSocketId, 'connecting');
+                } else if (peer.iceConnectionState === 'failed' || peer.iceConnectionState === 'disconnected') {
+                    updateUserConnectionStatus(targetSocketId, 'disconnected');
+                }
+            };
+
+            peer.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice_candidate', {
+                        target: targetSocketId,
+                        candidate: event.candidate
+                    });
+                    console.log('Отправлен ICE candidate к', targetSocketId);
+                } else {
+                    console.log('Все ICE candidates собраны для', targetSocketId);
+                }
+            };
+        }
+
+        function createPeerConnection(targetSocketId) {
+            if (targetSocketId === socket.id) {
+                console.warn('Попытка создать соединение с самим собой, пропускаем');
+                return null;
+            }
+            
+            if (peers[targetSocketId]) {
+                console.log('Соединение с', targetSocketId, 'уже существует');
+                return peers[targetSocketId];
+            }
+
+            console.log('Создание peer connection для', targetSocketId);
+            const peer = new RTCPeerConnection(configuration);
+            peers[targetSocketId] = peer;
+
+            setupPeerConnectionHandlers(peer, targetSocketId);
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => {
+                    if (track.readyState === 'live') {
+                        console.log('Добавление локального трека к peer:', track.kind, track.id, 'enabled:', track.enabled);
+                        peer.addTrack(track, localStream);
+                    } else {
+                        console.warn('Трек не готов:', track.kind, track.readyState);
+                    }
+                });
+            } else {
+                console.warn('Локальный поток отсутствует при создании peer connection для', targetSocketId);
+            }
+
+            if (!localStream) {
+                console.log('Локальный поток отсутствует, соединение будет создано позже');
+                return peer;
+            }
+
+            peer.createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: false
+            })
+                .then(offer => {
+                    console.log('Offer создан для', targetSocketId, ':', offer.type);
+                    return peer.setLocalDescription(offer);
+                })
+                .then(() => {
+                    console.log('Local description (offer) установлен для', targetSocketId);
+                    socket.emit('offer', {
+                        target: targetSocketId,
+                        offer: peer.localDescription
+                    });
+                    console.log('Offer отправлен к', targetSocketId);
+                })
+                .catch(error => {
+                    console.error('Ошибка создания offer для', targetSocketId, ':', error);
+                });
+            
+            return peer;
+        }
+
+        function updateUserConnectionStatus(targetSocketId, state) {
+            if (targetSocketId === socket.id) {
+                return;
+            }
+            
+            const statusElement = document.getElementById(`status-${targetSocketId}`);
+            if (!statusElement) {
+                console.log('Не найден элемент для обновления статуса:', `status-${targetSocketId}`);
+                return;
+            }
+            
+            console.log(`Обновление статуса пользователя ${targetSocketId} на ${state}`);
+            if (state === 'connected' || state === 'completed') {
+                statusElement.textContent = 'Подключен';
+                statusElement.className = 'status connected';
+            } else if (state === 'connecting' || state === 'new') {
+                statusElement.textContent = 'Подключение...';
+                statusElement.className = 'status connecting';
+            } else if (state === 'disconnected' || state === 'closed' || state === 'failed') {
+                statusElement.textContent = 'Отключен';
+                statusElement.className = 'status connecting';
+            }
+        }
+
+        function updateUsersList(users) {
+            console.log('Обновление списка пользователей:', users);
+            const container = document.getElementById('usersContainer');
+            container.innerHTML = '';
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<div class="info">В комнате пока никого нет</div>';
+                return;
+            }
+
+            users.forEach(user => {
+                console.log('Добавление пользователя в список:', user);
+                addUserToList(user);
+            });
+        }
+
+        function addUserToList(user) {
+            const container = document.getElementById('usersContainer');
+            if (document.getElementById(`user-${user.socket_id}`)) {
+                return;
+            }
+            
+            const emptyMessage = container.querySelector('.info');
+            if (emptyMessage) {
+                emptyMessage.remove();
+            }
+            
+            const userItem = document.createElement('div');
+            userItem.className = 'user-item';
+            userItem.id = `user-${user.socket_id}`;
+            userItem.innerHTML = `
+                <div class="user-item-header">
+                    <div class="user-item-main">
+                        <span class="mic-icon inactive" id="mic-icon-${user.socket_id}">○</span>
+                        <span class="user-name">${user.username || 'Пользователь'}</span>
+                    </div>
+                    <span class="status connecting" id="status-${user.socket_id}">Подключение...</span>
+                </div>
+                <div class="volume-control">
+                    <span class="volume-label" id="volume-label-${user.socket_id}">100%</span>
+                    <input type="range" 
+                           class="volume-slider" 
+                           id="volume-slider-${user.socket_id}"
+                           min="0" 
+                           max="200" 
+                           value="100"
+                           oninput="updateVolume('${user.socket_id}', this.value)">
+                </div>
+            `;
+            container.appendChild(userItem);
+            
+            if (remoteAudioElements[user.socket_id]) {
+                remoteAudioElements[user.socket_id].volume = 1.0;
+            }
+        }
+
+        function removeUserFromList(socketId) {
+            const container = document.getElementById('usersContainer');
+            const userItem = document.getElementById(`user-${socketId}`);
+            if (userItem) {
+                userItem.remove();
+            }
+            
+            if (micActivityCheckers[socketId]) {
+                clearInterval(micActivityCheckers[socketId]);
+                delete micActivityCheckers[socketId];
+            }
+            
+            const audio = remoteAudioElements[socketId];
+            if (audio && audio.srcObject instanceof MediaStream) {
+                audio.srcObject.getAudioTracks().forEach(track => {
+                    if (track._enabledObserver) {
+                        clearInterval(track._enabledObserver);
+                        delete track._enabledObserver;
+                    }
+                });
+            }
+            
+            if (audioGains[socketId]) {
+                delete audioGains[socketId];
+            }
+            
+            if (audioContexts[socketId]) {
+                audioContexts[socketId].close().catch(err => console.error('Ошибка закрытия AudioContext:', err));
+                delete audioContexts[socketId];
+            }
+            
+            delete audioAnalysers[socketId];
+            
+            delete userMicStates[socketId];
+            
+            if (remoteAudioElements[socketId]) {
+                remoteAudioElements[socketId].pause();
+                remoteAudioElements[socketId].srcObject = null;
+                remoteAudioElements[socketId].remove();
+                delete remoteAudioElements[socketId];
+            }
+            
+            const remainingUsers = container.querySelectorAll('.user-item');
+            if (remainingUsers.length === 0) {
+                container.innerHTML = '<div class="info">В комнате пока никого нет</div>';
+            }
+        }
+        
+        let userMicStates = {};
+
+        function updateUserMicIcon(socketId, isMuted) {
+            const micIcon = document.getElementById(`mic-icon-${socketId}`);
+            if (!micIcon) return;
+            
+            userMicStates[socketId] = isMuted;
+            
+            if (isMuted) {
+                micIcon.className = 'mic-icon muted-disabled';
+                micIcon.textContent = '●';
+            } else {
+                micIcon.className = 'mic-icon inactive';
+                micIcon.textContent = '○';
+            }
+        }
+
+        function updateMicIcon(socketId) {
+            if (userMicStates.hasOwnProperty(socketId)) {
+                updateUserMicIcon(socketId, userMicStates[socketId]);
+                return;
+            }
+            
+            const micIcon = document.getElementById(`mic-icon-${socketId}`);
+            if (!micIcon) return;
+            
+            const audio = remoteAudioElements[socketId];
+            if (!audio || !audio.srcObject) {
+                micIcon.className = 'mic-icon inactive';
+                micIcon.textContent = '○';
+                return;
+            }
+            
+            const stream = audio.srcObject;
+            if (!(stream instanceof MediaStream)) {
+                micIcon.className = 'mic-icon inactive';
+                micIcon.textContent = '○';
+                return;
+            }
+            
+            const audioTracks = stream.getAudioTracks();
+            if (audioTracks.length === 0) {
+                micIcon.className = 'mic-icon muted-disabled';
+                micIcon.textContent = '●';
+                return;
+            }
+            
+            const allMuted = audioTracks.every(track => !track.enabled || track.muted || track.readyState !== 'live');
+            
+            if (allMuted) {
+                micIcon.className = 'mic-icon muted-disabled';
+                micIcon.textContent = '●';
+            }
+        }
+        
+        window.updateVolume = function(socketId, value) {
+            const volumePercent = parseInt(value);
+            const audio = remoteAudioElements[socketId];
+            
+            if (!audio) {
+                console.warn('Audio элемент не найден для', socketId);
+                return;
+            }
+            
+            const gainValue = volumePercent / 100;
+            
+            if (volumePercent <= 100) {
+                audio.volume = Math.min(Math.max(gainValue, 0), 1.0);
+                if (audioGains[socketId]) {
+                    audioGains[socketId].gain.value = 1.0;
+                }
+                    console.log(`Громкость через audio.volume для ${socketId}: ${volumePercent}% (volume: ${audio.volume.toFixed(2)})`);
+            } else {
+                if (!audioGains[socketId]) {
+                    if (audio.srcObject) {
+                        console.log('Создание GainNode для усиления громкости', socketId);
+                        setupGainNodeForAudio(socketId, audio);
+                        setTimeout(() => {
+                            if (audioGains[socketId]) {
+                                const targetGain = Math.min(Math.max(gainValue, 0), 2.0);
+                                audioGains[socketId].gain.value = targetGain;
+                                audio.volume = 1.0;
+                                console.log(`Громкость через GainNode для ${socketId}: ${volumePercent}% (gain: ${targetGain.toFixed(2)})`);
+                            } else {
+                                audio.volume = 1.0;
+                                const slider = document.getElementById(`volume-slider-${socketId}`);
+                                if (slider) slider.value = 100;
+                                console.warn('Не удалось создать GainNode для', socketId);
+                            }
+                        }, 100);
+                        return;
+                    } else {
+                        audio.volume = 1.0;
+                        const slider = document.getElementById(`volume-slider-${socketId}`);
+                        if (slider) slider.value = 100;
+                        console.warn('Нет srcObject для создания GainNode', socketId);
+                        return;
+                    }
+                }
+                
+                const audioContext = audioContexts[socketId];
+                if (audioContext) {
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log('AudioContext возобновлен для', socketId);
+                        }).catch(err => {
+                            console.warn('Не удалось возобновить AudioContext для', socketId, err);
+                        });
+                    }
+                    
+                    const targetGain = Math.min(Math.max(gainValue, 0), 2.0);
+                    audioGains[socketId].gain.value = targetGain;
+                    audio.volume = 1.0;
+                    console.log(`Громкость через GainNode для ${socketId}: ${volumePercent}% (gain: ${targetGain.toFixed(2)}, context: ${audioContext.state})`);
+                } else {
+                    audio.volume = 1.0;
+                    console.warn('Нет AudioContext для GainNode', socketId);
+                }
+            }
+            
+            const label = document.getElementById(`volume-label-${socketId}`);
+            if (label) {
+                label.textContent = `${volumePercent}%`;
+            }
+        };
+        
+        function setupGainNodeForAudio(socketId, audio) {
+            if (!audio.srcObject) {
+                console.warn('Нет srcObject для создания GainNode', socketId);
+                return;
+            }
+            
+            try {
+                if (!audioContexts[socketId]) {
+                    audioContexts[socketId] = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const audioContext = audioContexts[socketId];
+                
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+                
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 1.0;
+                
+                if (!audio._audioSourceCreated) {
+                    const audioSource = audioContext.createMediaElementSource(audio);
+                    audioSource.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    audio._audioSourceCreated = true;
+                    audioGains[socketId] = gainNode;
+                    console.log('GainNode успешно создан и подключен для', socketId);
+                } else {
+                    if (!audioGains[socketId]) {
+                        console.warn('Audio элемент подключен, но GainNode не найден для', socketId);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка создания GainNode для', socketId, ':', error);
+            }
+        };
+        
+        function setupAudioAnalysis(socketId, stream) {
+            try {
+                if (!audioContexts[socketId]) {
+                    audioContexts[socketId] = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const audioContext = audioContexts[socketId];
+                
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().catch(err => {
+                        console.warn('Не удалось возобновить AudioContext для', socketId, err);
+                    });
+                }
+                
+                const source = audioContext.createMediaStreamSource(stream);
+                
+                const analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+                analyser.smoothingTimeConstant = 0.3;
+                
+                source.connect(analyser);
+                audioAnalysers[socketId] = analyser;
+                
+                startMicActivityCheck(socketId);
+            } catch (error) {
+                console.error('Ошибка настройки анализа звука для', socketId, ':', error);
+            }
+        }
+        
+        function startMicActivityCheck(socketId) {
+            if (micActivityCheckers[socketId]) {
+                clearInterval(micActivityCheckers[socketId]);
+            }
+            
+            const analyser = audioAnalysers[socketId];
+            if (!analyser) return;
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            const micIcon = document.getElementById(`mic-icon-${socketId}`);
+            const audio = remoteAudioElements[socketId];
+            
+            if (!micIcon) return;
+            
+            function checkMicStatus() {
+                if (!audio || !audio.srcObject) {
+                    return { isMuted: false, hasAudio: false };
+                }
+                
+                const stream = audio.srcObject;
+                if (!(stream instanceof MediaStream)) {
+                    return { isMuted: false, hasAudio: false };
+                }
+                
+                const audioTracks = stream.getAudioTracks();
+                if (audioTracks.length === 0) {
+                    return { isMuted: true, hasAudio: false };
+                }
+                
+                const allMuted = audioTracks.every(track => !track.enabled || track.muted || track.readyState !== 'live');
+                const hasActiveTrack = audioTracks.some(track => track.enabled && !track.muted && track.readyState === 'live');
+                
+                return {
+                    isMuted: allMuted,
+                    hasAudio: hasActiveTrack
+                };
+            }
+            
+            micActivityCheckers[socketId] = setInterval(() => {
+                if (!analyser || !micIcon) {
+                    return;
+                }
+                
+                if (userMicStates[socketId] === true) {
+                    micIcon.className = 'mic-icon muted-disabled';
+                    micIcon.textContent = '●';
+                    return;
+                }
+                
+                const micStatus = checkMicStatus();
+                
+                if (micStatus.isMuted) {
+                    micIcon.className = 'mic-icon muted-disabled';
+                    micIcon.textContent = '●';
+                    return;
+                }
+                
+                if (!micStatus.hasAudio) {
+                    micIcon.className = 'mic-icon inactive';
+                    micIcon.textContent = '○';
+                    return;
+                }
+                
+                analyser.getByteFrequencyData(dataArray);
+                
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / dataArray.length;
+                
+                const threshold = 10;
+                
+                micIcon.className = 'mic-icon';
+                if (average > threshold) {
+                    micIcon.className += ' active';
+                    micIcon.textContent = '●';
+                } else {
+                    micIcon.className += ' inactive';
+                    micIcon.textContent = '○';
+                }
+            }, 100);
+        }
+
+        function toggleMute() {
+            if (!localStream) {
+                requestMicrophoneAccess();
+                return;
+            }
+
+            isMuted = !isMuted;
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = !isMuted;
+            });
+
+            const muteBtn = document.getElementById('muteBtn');
+            const muteText = document.getElementById('muteText');
+            
+            if (isMuted) {
+                muteBtn.classList.add('muted');
+                muteText.textContent = 'Включить микрофон';
+                socket.emit('mic_muted', {});
+            } else {
+                muteBtn.classList.remove('muted');
+                muteText.textContent = 'Выключить микрофон';
+                socket.emit('mic_unmuted', {});
+            }
+        }
+
+        function leaveRoom() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            
+            Object.values(peers).forEach(peer => peer.close());
+            peers = {};
+            
+            socket.disconnect();
+            window.location.href = '/';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function copyRoomCode(event) {
+            const roomCode = '{{ROOM_CODE}}';
+            navigator.clipboard.writeText(roomCode).then(() => {
+                const btn = event ? event.target : document.querySelector('.copy-btn');
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✓ Скопировано!';
+                    btn.style.background = '#3a3a3a';
+                    btn.style.borderColor = '#888';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = '#2a2a2a';
+                        btn.style.borderColor = '#555';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                showError('Не удалось скопировать код');
+            });
+        }
+
+        function copyRoomLink(event) {
+            const roomLink = window.location.href;
+            navigator.clipboard.writeText(roomLink).then(() => {
+                const btn = event ? event.target : document.querySelector('.copy-btn');
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✓ Скопировано!';
+                    btn.style.background = '#3a3a3a';
+                    btn.style.borderColor = '#888';
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = '#2a2a2a';
+                        btn.style.borderColor = '#555';
+                    }, 2000);
+                }
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                showError('Не удалось скопировать ссылку');
+            });
+        }
+
+        window.addEventListener('beforeunload', () => {
+            leaveRoom();
+        });
+    </script>
+</body>
+</html>
+
